@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ------------------------------------------------------------------------------
-	CTFR - 04.03.18.02.10.00 - Sheila A. Berta (UnaPibaGeek)
+	                            CTFR 
 ------------------------------------------------------------------------------
 """
 
@@ -24,20 +24,21 @@ def parse_args():
 
 def banner():
 	global version
-	b = '''
+	b = r'''
           ____ _____ _____ ____  
          / ___|_   _|  ___|  _ \ 
         | |     | | | |_  | |_) |
         | |___  | | |  _| |  _ < 
          \____| |_| |_|   |_| \_\\
 	
-     Version {v} - Hey don't miss AXFR!
-    Made by Sheila A. Berta (UnaPibaGeek)
+     
+    
 	'''.format(v=version)
 	print(b)
 	
 def clear_url(target):
-	return re.sub('.*www\.','',target,1).split('/')[0].strip()
+#	return re.sub('.*www\.','',target,1).split('/')[0].strip()
+	return re.sub(r'.*www\.','',target,1).split('/')[0].strip()
 
 def save_subdomains(subdomain,output_file):
 	with open(output_file,"a") as f:
@@ -71,7 +72,7 @@ def main():
 		if output is not None:
 			save_subdomains(subdomain,output)
 
-	print("\n\n[!]  Done. Have a nice day! ;).")
+	print("\n\n[!]  Done !!!! ;).")
 
 
 main()
