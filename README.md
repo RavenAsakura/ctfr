@@ -1,5 +1,7 @@
 # CTFR
 
+> Maintained fork of [UnaPibaGeek/ctfr](https://github.com/UnaPibaGeek/ctfr) with input validation, timeouts, tests, and modern packaging. See [CHANGELOG.md](CHANGELOG.md).
+
 CTFR discovers subdomains from public [Certificate Transparency](https://certificate.transparency.dev/) logs through [crt.sh](https://crt.sh/). It does not use dictionaries or brute force.
 
 ## Requirements
@@ -10,7 +12,7 @@ CTFR discovers subdomains from public [Certificate Transparency](https://certifi
 ## Installation
 
 ```bash
-git clone https://github.com/UnaPibaGeek/ctfr.git
+git clone https://github.com/RavenAsakura/ctfr.git
 cd ctfr
 python3 -m venv .venv
 source .venv/bin/activate
@@ -63,6 +65,8 @@ Certificate Transparency data is public, but you should only investigate systems
 
 CTFR is distributed under the GNU General Public License v3.0. See [LICENSE](LICENSE).
 
-## Author
+## Credits
 
-Sheila A. Berta ([@UnaPibaGeek](https://www.twitter.com/UnaPibaGeek))
+**Original author:** CTFR was created by Sheila A. Berta ([@UnaPibaGeek](https://www.twitter.com/UnaPibaGeek)). The original project is at [UnaPibaGeek/ctfr](https://github.com/UnaPibaGeek/ctfr).
+
+**Maintainer of this fork:** [RavenAsakura](https://github.com/RavenAsakura), who authored the reliability fixes, tests, and packaging in [version 1.3.0](CHANGELOG.md).
