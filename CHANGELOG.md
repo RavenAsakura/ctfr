@@ -21,6 +21,7 @@ Authored by [RavenAsakura](https://github.com/RavenAsakura) in the maintained fo
 - Seven unit tests covering input normalization, invalid targets, JSON extraction, HTTP request construction, deduplication, overwrite mode, and append mode.
 - A GitHub Actions workflow that runs the test suite on Python 3.9 and 3.13.
 - Virtual-environment, package installation, testing, and responsible-use instructions in the README.
+- A quick-start section that documents running the script without installing the package.
 
 ### Changed
 

@@ -7,9 +7,27 @@ CTFR discovers subdomains from public [Certificate Transparency](https://certifi
 ## Requirements
 
 - Python 3.9 or later
+- [`requests`](https://pypi.org/project/requests/) (the only dependency)
 - Internet access to `crt.sh`
 
+## Quick start
+
+CTFR is a single script. If you already have `requests`, there is nothing to install:
+
+```bash
+git clone https://github.com/RavenAsakura/ctfr.git
+python3 ctfr.py -d example.com
+```
+
+If `requests` is missing, install it first:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
 ## Installation
+
+Install the package if you want the `ctfr` command available anywhere, or if you plan to use CTFR regularly. A virtual environment keeps its dependencies separate from your system Python:
 
 ```bash
 git clone https://github.com/RavenAsakura/ctfr.git
@@ -19,7 +37,13 @@ source .venv/bin/activate
 python -m pip install .
 ```
 
-This installs the `ctfr` command. For development, use `python -m pip install -e .` instead.
+On Debian and Ubuntu, install the `python3-venv` package first if `python3 -m venv` fails. On Windows, activate with `.venv\Scripts\activate` instead.
+
+For development, use an editable install so your changes take effect immediately:
+
+```bash
+python -m pip install -e .
+```
 
 ## Usage
 
@@ -38,12 +62,7 @@ ctfr -d example.com -o subdomains.txt --append
 
 By default, `--output` replaces the destination file with sorted, unique results. Use `--append` to preserve its contents and add only names that are not already present.
 
-You can also run the source file directly after installing the requirements:
-
-```bash
-python -m pip install -r requirements.txt
-python3 ctfr.py -d example.com
-```
+Without installing the package, run the script with `python3 ctfr.py` and the same options.
 
 ## Tests
 
