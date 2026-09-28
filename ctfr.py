@@ -4,8 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import json
+import math
+import os
 import re
+import stat
 import sys
+import tempfile
+import time
 from pathlib import Path
 from typing import Any, Iterable, Optional, Sequence
 from urllib.parse import urlsplit
@@ -16,6 +22,7 @@ import requests
 VERSION = "1.3.0"
 CRT_SH_URL = "https://crt.sh/"
 DEFAULT_TIMEOUT = 30.0
+MAX_RESPONSE_BYTES = 50 * 1024 * 1024
 DOMAIN_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 
 
@@ -38,7 +45,10 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help=f"HTTP timeout in seconds (default: {DEFAULT_TIMEOUT:g}).",
     )
     parser.add_argument("--version", action="version", version=f"CTFR {VERSION}")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.append and args.output is None:
+        parser.error("--append requires --output")
+    return args
 
 
 def positive_number(value: str) -> float:
@@ -46,8 +56,8 @@ def positive_number(value: str) -> float:
         number = float(value)
     except ValueError as exc:
         raise argparse.ArgumentTypeError("must be a number") from exc
-    if number <= 0:
-        raise argparse.ArgumentTypeError("must be greater than zero")
+    if not math.isfinite(number) or number <= 0:
+        raise argparse.ArgumentTypeError("must be a finite number greater than zero")
     return number
 
 
@@ -72,6 +82,10 @@ def normalize_domain(value: str) -> str:
         raise ValueError("the target domain cannot be empty")
 
     parsed = urlsplit(value if "://" in value else f"//{value}")
+    if parsed.scheme and parsed.scheme not in ("http", "https"):
+        raise ValueError("the target URL must use HTTP or HTTPS")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("the target URL must not contain credentials")
     try:
         hostname = parsed.hostname
         parsed.port  # Validate a port if one was supplied.
@@ -93,6 +107,8 @@ def normalize_domain(value: str) -> str:
         raise ValueError("enter a fully qualified domain, such as example.com")
     if not all(DOMAIN_LABEL.fullmatch(label) for label in domain.split(".")):
         raise ValueError(f"invalid domain: {hostname}")
+    if domain.rsplit(".", 1)[-1].isdigit():
+        raise ValueError("the target must end in a domain label")
     return domain
 
 
@@ -131,14 +147,27 @@ def fetch_subdomains(
     timeout: float = DEFAULT_TIMEOUT,
     client: Any = requests,
 ) -> list[str]:
-    response = client.get(
+    deadline = time.monotonic() + timeout
+    with client.get(
         CRT_SH_URL,
         params={"q": f"%.{target}", "output": "json"},
         headers={"User-Agent": f"CTFR/{VERSION}"},
         timeout=timeout,
-    )
-    response.raise_for_status()
-    return extract_subdomains(response.json(), target)
+        stream=True,
+    ) as response:
+        response.raise_for_status()
+        chunks = []
+        size = 0
+        for chunk in response.iter_content(chunk_size=65536):
+            if time.monotonic() > deadline:
+                raise ValueError("crt.sh response exceeded the total timeout")
+            size += len(chunk)
+            if size > MAX_RESPONSE_BYTES:
+                raise ValueError("crt.sh response exceeds the size limit")
+            chunks.append(chunk)
+        if time.monotonic() > deadline:
+            raise ValueError("crt.sh response exceeded the total timeout")
+    return extract_subdomains(json.loads(b"".join(chunks)), target)
 
 
 def save_subdomains(
@@ -147,21 +176,29 @@ def save_subdomains(
     """Write results once and return the number of names written."""
     names = sorted(set(subdomains))
 
-    if not append:
-        output_file.write_text(
-            "".join(f"{name}\n" for name in names), encoding="utf-8"
-        )
-        return len(names)
-
-    previous = output_file.read_text(encoding="utf-8") if output_file.exists() else ""
-    existing = set(previous.splitlines())
+    previous = output_file.read_text(encoding="utf-8") if append and output_file.exists() else ""
+    existing = set(previous.splitlines()) if append else set()
     new_names = [name for name in names if name not in existing]
-    if not new_names:
+    if append and not new_names:
         return 0
 
     separator = "\n" if previous and not previous.endswith("\n") else ""
-    with output_file.open("a", encoding="utf-8") as file:
-        file.write(separator + "".join(f"{name}\n" for name in new_names))
+    content = (previous + separator if append else "") + "".join(
+        f"{name}\n" for name in new_names
+    )
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=output_file.parent, delete=False
+        ) as temporary_file:
+            temporary_path = Path(temporary_file.name)
+            temporary_file.write(content)
+        if output_file.exists():
+            os.chmod(temporary_path, stat.S_IMODE(output_file.stat().st_mode))
+        os.replace(temporary_path, output_file)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
     return len(new_names)
 
 

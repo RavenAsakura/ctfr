@@ -16,6 +16,7 @@ CTFR is a single script. If you already have `requests`, there is nothing to ins
 
 ```bash
 git clone https://github.com/RavenAsakura/ctfr.git
+cd ctfr
 python3 ctfr.py -d example.com
 ```
 
@@ -51,7 +52,7 @@ python -m pip install -e .
 ctfr -d DOMAIN_OR_URL [-o FILE] [--append] [--timeout SECONDS]
 ```
 
-The target can be a domain or a complete URL:
+The target can be a domain or an HTTP/HTTPS URL without credentials:
 
 ```bash
 ctfr -d example.com
@@ -61,6 +62,9 @@ ctfr -d example.com -o subdomains.txt --append
 ```
 
 By default, `--output` replaces the destination file with sorted, unique results. Use `--append` to preserve its contents and add only names that are not already present.
+`--append` requires `--output`. Results are written through a temporary file in the same directory, so a failed replacement leaves the previous file intact. A successful query with no matching names produces an empty file in replacement mode.
+
+A leading `www.` in the target is removed, so `www.example.com` searches `example.com` and its subdomains. Wildcard certificate entries such as `*.example.com` appear as `example.com`; this does not establish that the name currently resolves. The response is limited to 50 MiB, and `--timeout` must be a finite, positive number. A larger or slower response exits with an error.
 
 Without installing the package, run the script with `python3 ctfr.py` and the same options.
 

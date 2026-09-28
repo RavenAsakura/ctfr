@@ -4,6 +4,16 @@ All notable changes to CTFR are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Changed
+
+- Limit crt.sh responses to 50 MiB and stop downloads that exceed the configured total timeout.
+- Write output through a temporary file before replacing the destination, preserving the previous file if replacement fails.
+- Reject non-finite timeouts, unsupported URL schemes, credential-bearing URLs, and numeric-only final domain labels.
+- Require `--output` when `--append` is used.
+- Expand local tests for the CLI, response limits, and output failure handling.
+
 ## 1.3.0 - 2026-09-25
 
 Authored by [RavenAsakura](https://github.com/RavenAsakura) in the maintained fork. The original CTFR was created by Sheila A. Berta.
